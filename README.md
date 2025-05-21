@@ -1,4 +1,13 @@
 
+# Mapbox
+
+This repository contains scripts and data for working with Mapbox-related geographic information.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+=======
+
 # Mapbox Demo
 
 This repository contains a small Mapbox demo showing German regions with data
@@ -76,6 +85,7 @@ available through environment variables:
 
 You can create a `.env` file based on `.env.example` and load it before
 running the API.
+
 
 
 
