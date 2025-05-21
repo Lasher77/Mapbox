@@ -33,8 +33,10 @@
     </div>
     <div id="map"></div>
 
+    <!-- Token configuration -->
+    <script src="config.js"></script>
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1Ijoic3ZlbndpbmtsZXJidm13IiwiYSI6ImNtN3lra2pmYTA5YnkybHNqZ2ZuYTQ3enAifQ.IPWqBFTpyQekDYCLJIpXqQ';
+        mapboxgl.accessToken = window.config.MAPBOX_TOKEN;
 
         const bundeslaender = [
             {id: '01', name: 'Schleswig-Holstein'},
