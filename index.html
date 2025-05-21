@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karte mit Wirtschaftsregionen, Landkreisen und Salesforce-Daten</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100%; height: 100vh; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h3>Wirtschaftsregionen ein-/ausblenden</h3>
+        <div id="region-list"></div>
+        <h3>Bundesländer filtern</h3>
+        <div id="bundesland-list"></div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic3ZlbndpbmtsZXJidm13IiwiYSI6ImNtN3lra2pmYTA5YnkybHNqZ2ZuYTQ3enAifQ.IPWqBFTpyQekDYCLJIpXqQ';
+
+        const bundeslaender = [
+            {id: '01', name: 'Schleswig-Holstein'},
+            {id: '02', name: 'Hamburg'},
+            {id: '03', name: 'Niedersachsen'},
+            {id: '04', name: 'Bremen'},
+            {id: '05', name: 'Nordrhein-Westfalen'},
+            {id: '06', name: 'Hessen'},
+            {id: '07', name: 'Rheinland-Pfalz'},
+            {id: '08', name: 'Baden-Württemberg'},
+            {id: '09', name: 'Bayern'},
+            {id: '10', name: 'Saarland'},
+            {id: '11', name: 'Berlin'},
+            {id: '12', name: 'Brandenburg'},
+            {id: '13', name: 'Mecklenburg-Vorpommern'},
+            {id: '14', name: 'Sachsen'},
+            {id: '15', name: 'Sachsen-Anhalt'},
+            {id: '16', name: 'Thüringen'}
+        ];
+
+        var map = new mapboxgl.Map({
+            container: 'map', 
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [10.0, 51.0],
+            zoom: 5
+        });
+
+        const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+        let accountsData = {};
+
+        map.on('load', function () {
+            fetch('http://localhost:8000/Wirtschaftsregionen_cleaned.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    map.addSource('wirtschaftsregionen', { type: 'geojson', data: data });
+
+                    const regionList = document.getElementById('region-list');
+                    const regions = [...new Set(data.features.map(f => f.properties.Wirtschaftsregion))];
+
+                    regions.forEach(region => {
+                        map.addLayer({
+                            id: `region-${region}`,
+                            type: 'fill',
+                            source: 'wirtschaftsregionen',
+                            paint: { 'fill-color': '#088', 'fill-opacity': 0.5 },
+                            filter: ['==', ['get', 'Wirtschaftsregion'], region]
+                        });
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `checkbox-${region}`;
+                        checkbox.checked = true;
+
+                        checkbox.addEventListener('change', () => {
+                            const visibility = checkbox.checked ? 'visible' : 'none';
+                            map.setLayoutProperty(`region-${region}`, 'visibility', visibility);
+                        });
+
+                        const label = document.createElement('label');
+                        label.htmlFor = checkbox.id;
+                        label.textContent = region;
+
+                        const div = document.createElement('div');
+                        div.appendChild(checkbox);
+                        div.appendChild(label);
+
+                        regionList.appendChild(div);
+                    });
+                });
+
+            map.addSource('landkreise', { type: 'geojson', data: 'http://localhost:8000/Landkreise.geojson' });
+
+            map.addLayer({
+                id: 'landkreise-fill',
+                type: 'fill',
+                source: 'landkreise',
+                paint: { 'fill-color': '#FF5733', 'fill-opacity': 0 }
+            });
+
+            map.addLayer({
+                id: 'landkreise-layer',
+                type: 'line',
+                source: 'landkreise',
+                paint: { 'line-color': '#FF5733', 'line-width': 1 }
+            });
+
+            const bundeslandList = document.getElementById('bundesland-list');
+            bundeslaender.forEach(bl => {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.id = `bl-${bl.id}`;
+                checkbox.addEventListener('change', updateBundeslaenderFilter);
+
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = bl.name;
+
+                const div = document.createElement('div');
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                bundeslandList.appendChild(div);
+            });
+
+            function updateBundeslaenderFilter() {
+                const checkedBL = bundeslaender.filter(bl => document.getElementById(`bl-${bl.id}`).checked).map(bl => bl.id);
+                map.setFilter('landkreise-layer', ['in', ['get', 'SN_L'], ...checkedBL]);
+                map.setFilter('landkreise-fill', ['in', ['get', 'SN_L'], ...checkedBL]);
+            }
+            updateBundeslaenderFilter();
+
+            fetch('http://127.0.0.1:5000/accounts_by_state')
+                .then(res => res.json())
+                .then(data => { accountsData = data; });
+
+            map.on('mousemove', 'landkreise-fill', (e) => {
+                const stateId = e.features[0].properties.SN_L;
+                const stateName = bundeslaender.find(bl => bl.id === stateId)?.name;
+                const accounts = accountsData[stateName] || 0;
+                popup.setLngLat(e.lngLat)
+                    .setHTML(`<strong>${stateName}</strong>: ${accounts} Accounts`)
+                    .addTo(map);
+            });
+
+            map.on('mouseleave', 'landkreise-fill', () => popup.remove());
+        });
+    </script>
+</body>
+</html>
