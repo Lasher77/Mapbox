@@ -27,9 +27,9 @@ def connect_salesforce():
 
     try:
         sf = Salesforce(
-            username=os.environ.get("SF_USERNAME"),
-            password=os.environ.get("SF_PASSWORD"),
-            security_token=os.environ.get("SF_SECURITY_TOKEN")
+            username=username,
+            password=password,
+            security_token=security_token
         )
         logging.info("✅ Verbindung zu Salesforce erfolgreich.")
         return sf

@@ -22,9 +22,9 @@ from Salesforce.
    ```
 3. Set the Salesforce credentials as environment variables:
    ```bash
-   export SF_USERNAME=your_username
-   export SF_PASSWORD=your_password
-   export SF_SECURITY_TOKEN=your_token
+   export SALESFORCE_USERNAME=your_username
+   export SALESFORCE_PASSWORD=your_password
+   export SALESFORCE_SECURITY_TOKEN=your_token
    ```
 4. Ensure `Landkreise.geojson` and `Wirtschaftsregionen_cleaned.geojson` are in
    the project directory. If they are hosted elsewhere download them first.
