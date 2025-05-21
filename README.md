@@ -1,6 +1,15 @@
 # Mapbox
 
 
+## Installation
+
+Use `pip` to install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+=======
+
 ## Mapbox Token Setup
 
 The frontend reads the Mapbox access token from a `config.js` file located in the project root. This file is ignored by git so that your token is not committed.
@@ -30,4 +39,5 @@ available through environment variables:
 
 You can create a `.env` file based on `.env.example` and load it before
 running the API.
+
 
