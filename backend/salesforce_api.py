@@ -3,6 +3,7 @@ from simple_salesforce import Salesforce
 from flask_cors import CORS
 from collections import defaultdict
 import logging
+import os
 
 # Logging-Konfiguration
 logging.basicConfig(level=logging.INFO)
@@ -12,11 +13,23 @@ CORS(app)
 
 # Salesforce-Verbindung herstellen
 def connect_salesforce():
+    """Establish a Salesforce connection using environment variables."""
+
+    username = os.getenv("SALESFORCE_USERNAME")
+    password = os.getenv("SALESFORCE_PASSWORD")
+    security_token = os.getenv("SALESFORCE_SECURITY_TOKEN")
+
+    if not all([username, password, security_token]):
+        logging.error(
+            "❌ Fehlende Salesforce-Zugangsdaten. Bitte Umgebungsvariablen setzen."
+        )
+        return None
+
     try:
         sf = Salesforce(
-	    username="sven.winkler-o1zh@force.com",
-            password="BW-pfunkera69$",
-            security_token="D57qFMPZ6jkpFkFKdWICbuuc"	
+            username=os.environ.get("SF_USERNAME"),
+            password=os.environ.get("SF_PASSWORD"),
+            security_token=os.environ.get("SF_SECURITY_TOKEN")
         )
         logging.info("✅ Verbindung zu Salesforce erfolgreich.")
         return sf
