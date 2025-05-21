@@ -13,6 +13,18 @@ CORS(app)
 
 # Salesforce-Verbindung herstellen
 def connect_salesforce():
+    """Establish a Salesforce connection using environment variables."""
+
+    username = os.getenv("SALESFORCE_USERNAME")
+    password = os.getenv("SALESFORCE_PASSWORD")
+    security_token = os.getenv("SALESFORCE_SECURITY_TOKEN")
+
+    if not all([username, password, security_token]):
+        logging.error(
+            "❌ Fehlende Salesforce-Zugangsdaten. Bitte Umgebungsvariablen setzen."
+        )
+        return None
+
     try:
         sf = Salesforce(
             username=os.environ.get("SF_USERNAME"),
