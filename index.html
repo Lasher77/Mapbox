@@ -29,7 +29,7 @@
         <h3>Wirtschaftsregionen ein-/ausblenden</h3>
         <div id="region-list"></div>
         <h3>Bundesländer filtern</h3>
-        <div id="bundesland-list"></div>
+        <select id="bundesland-select"></select>
     </div>
     <div id="map"></div>
 
@@ -123,28 +123,30 @@
                 paint: { 'line-color': '#FF5733', 'line-width': 1 }
             });
 
-            const bundeslandList = document.getElementById('bundesland-list');
+            const bundeslandSelect = document.getElementById('bundesland-select');
+            const alleOption = document.createElement('option');
+            alleOption.value = 'all';
+            alleOption.textContent = 'Alle';
+            bundeslandSelect.appendChild(alleOption);
+
             bundeslaender.forEach(bl => {
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = true;
-                checkbox.id = `bl-${bl.id}`;
-                checkbox.addEventListener('change', updateBundeslaenderFilter);
-
-                const label = document.createElement('label');
-                label.htmlFor = checkbox.id;
-                label.textContent = bl.name;
-
-                const div = document.createElement('div');
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                bundeslandList.appendChild(div);
+                const option = document.createElement('option');
+                option.value = bl.id;
+                option.textContent = bl.name;
+                bundeslandSelect.appendChild(option);
             });
 
+            bundeslandSelect.addEventListener('change', updateBundeslaenderFilter);
+
             function updateBundeslaenderFilter() {
-                const checkedBL = bundeslaender.filter(bl => document.getElementById(`bl-${bl.id}`).checked).map(bl => bl.id);
-                map.setFilter('landkreise-layer', ['in', ['get', 'SN_L'], ...checkedBL]);
-                map.setFilter('landkreise-fill', ['in', ['get', 'SN_L'], ...checkedBL]);
+                const selectedId = bundeslandSelect.value;
+                if (selectedId === 'all') {
+                    map.setFilter('landkreise-layer', null);
+                    map.setFilter('landkreise-fill', null);
+                } else {
+                    map.setFilter('landkreise-layer', ['==', ['get', 'SN_L'], selectedId]);
+                    map.setFilter('landkreise-fill', ['==', ['get', 'SN_L'], selectedId]);
+                }
             }
             updateBundeslaenderFilter();
 
