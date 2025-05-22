@@ -62,38 +62,40 @@ def get_accounts():
 
     
 
-@app.route('/accounts_by_state')
-def get_accounts_by_state():
+@app.route('/accounts_by_landkreis')
+def get_accounts_by_landkreis():
     sf = connect_salesforce()
 
     if sf is None:
         return jsonify({"error": "Keine Verbindung zu Salesforce möglich."}), 403
 
     query = """
-        SELECT Id, BillingState
+        SELECT Id, Landkreis_Nummer__c
         FROM Account
-        WHERE BillingState != NULL
+        WHERE Landkreis_Nummer__c != NULL
         AND Status__c IN ('Mitglied', 'Mitglied in Kündigung')
     """
 
     try:
-        state_counts = defaultdict(int)
+        landkreis_counts = defaultdict(int)
         result = sf.query(query)
 
         # erste Seite verarbeiten
         for record in result['records']:
-            state = record['BillingState']
-            state_counts[state] += 1
+            district = record.get('Landkreis_Nummer__c')
+            if district:
+                landkreis_counts[district] += 1
 
         # weitere Seiten (falls vorhanden)
         while not result['done']:
             result = sf.query_more(result['nextRecordsUrl'], True)
             for record in result['records']:
-                state = record['BillingState']
-                state_counts[state] += 1
+                district = record.get('Landkreis_Nummer__c')
+                if district:
+                    landkreis_counts[district] += 1
 
-        logging.info(f"✅ Alle Accounts erfolgreich abgerufen und aggregiert.")
-        return jsonify(state_counts)
+        logging.info("✅ Alle Accounts erfolgreich abgerufen und nach Landkreis aggregiert.")
+        return jsonify(landkreis_counts)
 
     except Exception as e:
         logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")

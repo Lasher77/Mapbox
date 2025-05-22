@@ -150,15 +150,16 @@
             }
             updateBundeslaenderFilter();
 
-            fetch('http://127.0.0.1:5000/accounts_by_state')
+            fetch('http://127.0.0.1:5000/accounts_by_landkreis')
                 .then(res => res.json())
                 .then(data => { accountsData = data; });
 
             map.on('mousemove', 'landkreise-fill', (e) => {
                 const districtName = e.features[0].properties.GEN;
                 const districtNumber = e.features[0].properties.RS;
+                const count = accountsData[districtNumber] || 0;
                 popup.setLngLat(e.lngLat)
-                    .setHTML(`<strong>${districtName}</strong> (Nr. ${districtNumber})`)
+                    .setHTML(`<strong>${districtName}</strong> (Nr. ${districtNumber})<br/>Mitglieder: ${count}`)
                     .addTo(map);
             });
 
