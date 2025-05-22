@@ -155,11 +155,10 @@
                 .then(data => { accountsData = data; });
 
             map.on('mousemove', 'landkreise-fill', (e) => {
-                const stateId = e.features[0].properties.SN_L;
-                const stateName = bundeslaender.find(bl => bl.id === stateId)?.name;
-                const accounts = accountsData[stateName] || 0;
+                const districtName = e.features[0].properties.GEN;
+                const districtNumber = e.features[0].properties.RS;
                 popup.setLngLat(e.lngLat)
-                    .setHTML(`<strong>${stateName}</strong>: ${accounts} Accounts`)
+                    .setHTML(`<strong>${districtName}</strong> (Nr. ${districtNumber})`)
                     .addTo(map);
             });
 
