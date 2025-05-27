@@ -100,6 +100,47 @@ def get_accounts_by_landkreis():
     except Exception as e:
         logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")
         return jsonify({"error": str(e)}), 403
+
+
+@app.route('/mitarbeiter_by_landkreis')
+def get_mitarbeiter_by_landkreis():
+    sf = connect_salesforce()
+
+    if sf is None:
+        return jsonify({"error": "Keine Verbindung zu Salesforce möglich."}), 403
+
+    query = """
+        SELECT Landkreis_Code__c, Vorname__c, Name__c
+        FROM Zuordnung_BV_auf_Landkreis__c
+        WHERE Landkreis_Code__c != NULL
+    """
+
+    try:
+        landkreis_staff = defaultdict(list)
+        result = sf.query(query)
+
+        for record in result['records']:
+            code = record.get('Landkreis_Code__c')
+            first = record.get('Vorname__c') or ''
+            last = record.get('Name__c') or ''
+            if code:
+                landkreis_staff[code].append((first + " " + last).strip())
+
+        while not result['done']:
+            result = sf.query_more(result['nextRecordsUrl'], True)
+            for record in result['records']:
+                code = record.get('Landkreis_Code__c')
+                first = record.get('Vorname__c') or ''
+                last = record.get('Name__c') or ''
+                if code:
+                    landkreis_staff[code].append((first + " " + last).strip())
+
+        logging.info("✅ Zuordnungen erfolgreich abgerufen und nach Landkreis gruppiert.")
+        return jsonify(landkreis_staff)
+
+    except Exception as e:
+        logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")
+        return jsonify({"error": str(e)}), 403
     
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
