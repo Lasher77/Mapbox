@@ -1,6 +1,6 @@
 # Mapbox Demo
 
-This repository contains a small Mapbox demo showing German regions with data retrieved from Salesforce. The map now also shows which employees are active in each county based on records from the custom object `Zuordnung_BV_auf_Landkreis__c`. In addition it displays how many companies exist in each district using data from `Potenziale_Landkreise__c`.
+This repository contains a small Mapbox demo showing German regions with data retrieved from Salesforce. The map now also shows which employees are active in each county based on records from the custom object `Zuordnung_BV_auf_Landkreis__c`. In addition it displays how many companies exist in each district using data from `Potenziale_Lankreise__c`.
 
 ## License
 
