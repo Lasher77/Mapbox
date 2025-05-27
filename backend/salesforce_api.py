@@ -152,7 +152,7 @@ def get_unternehmen_by_landkreis():
 
     query = """
         SELECT Landkreis_Nummer__c, Insgesamt_WZ2008_Abschnitte_B_NP_S__c
-        FROM Potenziale_Landkreise__c
+        FROM Potenziale_Lankreise__c
         WHERE Landkreis_Nummer__c != NULL
     """
 
