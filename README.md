@@ -1,6 +1,6 @@
 # Mapbox Demo
 
-This repository contains a small Mapbox demo showing German regions with data retrieved from Salesforce. The map now also shows which employees are active in each county based on records from the custom object `Zuordnung_BV_auf_Landkreis__c`.
+This repository contains a small Mapbox demo showing German regions with data retrieved from Salesforce. The map now also shows which employees are active in each county based on records from the custom object `Zuordnung_BV_auf_Landkreis__c`. In addition it displays how many companies exist in each district using data from `Potenziale_Landkreise__c`.
 
 ## License
 
@@ -40,3 +40,4 @@ This project is licensed under the [MIT License](LICENSE).
    ```
 3. Open [http://localhost:8000/index.html](http://localhost:8000/index.html) in your browser to view the map.
 4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
+5. The endpoint `/unternehmen_by_landkreis` provides the total number of companies per district, which is also shown in the hover popup.

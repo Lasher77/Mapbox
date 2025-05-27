@@ -67,6 +67,7 @@
         const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
         let accountsData = {};
         let mitarbeiterData = {};
+        let potenzialeData = {};
 
         map.on('load', function () {
             fetch('http://localhost:8000/Wirtschaftsregionen_cleaned.geojson')
@@ -159,14 +160,19 @@
                 .then(res => res.json())
                 .then(data => { mitarbeiterData = data; });
 
+            fetch('http://127.0.0.1:5000/unternehmen_by_landkreis')
+                .then(res => res.json())
+                .then(data => { potenzialeData = data; });
+
             map.on('mousemove', 'landkreise-fill', (e) => {
                 const districtName = e.features[0].properties.GEN;
                 const districtNumber = e.features[0].properties.RS;
                 const count = accountsData[districtNumber] || 0;
+                const totalCompanies = potenzialeData[districtNumber] || 0;
                 const mitarbeiter = mitarbeiterData[districtNumber] || [];
                 const mitarbeiterHtml = mitarbeiter.length ? `<br/>Mitarbeiter: ${mitarbeiter.join(', ')}` : '';
                 popup.setLngLat(e.lngLat)
-                    .setHTML(`<strong>${districtName}</strong> (Nr. ${districtNumber})<br/>Mitglieder: ${count}${mitarbeiterHtml}`)
+                    .setHTML(`<strong>${districtName}</strong> (Nr. ${districtNumber})<br/>Unternehmen gesamt: ${totalCompanies}<br/>Mitglieder: ${count}${mitarbeiterHtml}`)
                     .addTo(map);
             });
 
