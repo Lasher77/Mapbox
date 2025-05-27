@@ -1,6 +1,6 @@
 # Mapbox Demo
 
-This repository contains a small Mapbox demo showing German regions with data retrieved from Salesforce.
+This repository contains a small Mapbox demo showing German regions with data retrieved from Salesforce. The map now also shows which employees are active in each county based on records from the custom object `Zuordnung_BV_auf_Landkreis__c`.
 
 ## License
 
@@ -39,3 +39,4 @@ This project is licensed under the [MIT License](LICENSE).
    python backend/salesforce_api.py
    ```
 3. Open [http://localhost:8000/index.html](http://localhost:8000/index.html) in your browser to view the map.
+4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
