@@ -141,7 +141,46 @@ def get_mitarbeiter_by_landkreis():
     except Exception as e:
         logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")
         return jsonify({"error": str(e)}), 403
-    
+
+@app.route('/unternehmen_by_landkreis')
+def get_unternehmen_by_landkreis():
+    """Return the total number of companies per district."""
+    sf = connect_salesforce()
+
+    if sf is None:
+        return jsonify({"error": "Keine Verbindung zu Salesforce m\u00f6glich."}), 403
+
+    query = """
+        SELECT Landkreis_Nummer__c, Insgesamt_WZ2008_Abschnitte_B_NP_S__c
+        FROM Potenziale_Landkreise__c
+        WHERE Landkreis_Nummer__c != NULL
+    """
+
+    try:
+        company_counts = {}
+        result = sf.query(query)
+
+        for record in result['records']:
+            code = record.get('Landkreis_Nummer__c')
+            count = record.get('Insgesamt_WZ2008_Abschnitte_B_NP_S__c')
+            if code:
+                company_counts[code] = count
+
+        while not result['done']:
+            result = sf.query_more(result['nextRecordsUrl'], True)
+            for record in result['records']:
+                code = record.get('Landkreis_Nummer__c')
+                count = record.get('Insgesamt_WZ2008_Abschnitte_B_NP_S__c')
+                if code:
+                    company_counts[code] = count
+
+        logging.info("✅ Unternehmenspotenziale erfolgreich abgerufen.")
+        return jsonify(company_counts)
+
+    except Exception as e:
+        logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")
+        return jsonify({"error": str(e)}), 403
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
 
