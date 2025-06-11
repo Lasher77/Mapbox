@@ -42,3 +42,4 @@ This project is licensed under the [MIT License](LICENSE).
 4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
 5. The endpoint `/unternehmen_by_landkreis` provides the total number of companies per district, which is also shown in the hover popup.
 6. Use the checkbox "nach Mitarbeitern" in the control panel to toggle coloring of counties based on the number of assigned employees.
+7. Switch the mode selector to "Soll" to edit county assignments. When a county is clicked in this mode, you can enter the responsible employee. The assignments are stored locally in `backend/assignments.json` and served through the new endpoints `/assignments` and `/assignment/<rs>`.
