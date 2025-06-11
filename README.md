@@ -41,3 +41,4 @@ This project is licensed under the [MIT License](LICENSE).
 3. Open [http://localhost:8000/index.html](http://localhost:8000/index.html) in your browser to view the map.
 4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
 5. The endpoint `/unternehmen_by_landkreis` provides the total number of companies per district, which is also shown in the hover popup.
+6. Use the checkbox "nach Mitarbeitern" in the control panel to toggle coloring of counties based on the number of assigned employees.
