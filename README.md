@@ -28,6 +28,14 @@ This project is licensed under the [MIT License](LICENSE).
    You can create a `.env` file based on `.env.example` and load it before running the API.
 4. Ensure `Landkreise.geojson` and `Wirtschaftsregionen_cleaned.geojson` are present in the project directory.
 
+## Database
+
+The backend stores county assignments in a local SQLite file named
+`landkreis_assignments.db`. The file is created automatically the first
+time you start `backend/salesforce_api.py` and requires no additional
+setup. There are currently no environment variables to change the
+database location or name.
+
 ## Running the app
 
 1. Start the local HTTP server that serves the static files and GeoJSON:
@@ -41,4 +49,11 @@ This project is licensed under the [MIT License](LICENSE).
 3. Open [http://localhost:8000/index.html](http://localhost:8000/index.html) in your browser to view the map.
 4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
 5. The endpoint `/unternehmen_by_landkreis` provides the total number of companies per district, which is also shown in the hover popup.
-6. Use the checkbox "nach Mitarbeitern" in the control panel to toggle coloring of counties based on the number of assigned employees.
+6. Two additional endpoints handle county assignments:
+   - `POST /assignment` stores an assignment record.
+   - `GET /assignment/<rs>` retrieves the stored data for a county.
+7. Use the dropdown "Ansicht" to switch between **Ist** and **Soll**.
+   In **Soll** view, clicking a county opens an info box where you can edit
+   the economic region and FKT contacts. The assignments are saved in the
+   SQLite database. The checkbox "nach Mitarbeitern" toggles coloring of
+   counties based on the number of assigned employees.
