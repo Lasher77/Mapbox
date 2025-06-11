@@ -22,6 +22,19 @@
             font-family: Arial, sans-serif;
             z-index: 1000;
         }
+        #info-box {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-width: 300px;
+            font-family: Arial, sans-serif;
+            display: none;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -32,8 +45,14 @@
         <select id="bundesland-select"></select>
         <h3>Landkreise einfärben</h3>
         <label><input type="checkbox" id="color-toggle" checked> nach Mitarbeitern</label>
+        <h3>Ansicht</h3>
+        <select id="view-select">
+            <option value="ist">Ist-Zustand</option>
+            <option value="soll">Soll-Zustand</option>
+        </select>
     </div>
     <div id="map"></div>
+    <div id="info-box"></div>
 
     <!-- Token configuration -->
     <script src="config.js"></script>
@@ -71,6 +90,16 @@
         let mitarbeiterData = {};
         let potenzialeData = {};
         let coloringEnabled = true;
+        const infoBox = document.getElementById('info-box');
+        const viewSelect = document.getElementById('view-select');
+        let sollView = false;
+
+        viewSelect.addEventListener('change', () => {
+            sollView = viewSelect.value === 'soll';
+            if (!sollView) {
+                infoBox.style.display = 'none';
+            }
+        });
 
         map.on('load', function () {
             fetch('http://localhost:8000/Wirtschaftsregionen_cleaned.geojson')
@@ -195,6 +224,7 @@
             }
 
             map.on('mousemove', 'landkreise-fill', (e) => {
+                if (sollView) return;
                 const districtName = e.features[0].properties.GEN;
                 const districtNumber = e.features[0].properties.RS;
                 const count = accountsData[districtNumber] || 0;
@@ -206,7 +236,45 @@
                     .addTo(map);
             });
 
-            map.on('mouseleave', 'landkreise-fill', () => popup.remove());
+            map.on('mouseleave', 'landkreise-fill', () => {
+                if (!sollView) popup.remove();
+            });
+
+            map.on('click', 'landkreise-fill', (e) => {
+                if (!sollView) return;
+                const props = e.features[0].properties;
+                const blName = bundeslaender.find(b => b.id === props.SN_L)?.name || '';
+                const districtNumber = props.RS;
+                const count = accountsData[districtNumber] || 0;
+                const totalCompanies = potenzialeData[districtNumber] || 0;
+                let html = `<strong>${props.GEN}</strong><br/>Bundesland: ${blName}<br/>Mitgliederzahl: ${count}<br/>Unternehmenspotenzial: ${totalCompanies}<br/>Landkreisnummer: ${districtNumber}<br/>`;
+                html += 'Wirtschaftsregion Neu: <input type="text" id="wr-neu"><br/>';
+                html += '<div id="fkt-container"><label>Zuständiger FKT Neu: <input type="text" class="fkt-input"></label></div>';
+                html += '<button id="add-fkt" type="button">+</button><br/>';
+                html += '<button id="save-info" type="button">Speichern</button>';
+                infoBox.innerHTML = html;
+                infoBox.style.display = 'block';
+
+                document.getElementById('add-fkt').onclick = () => {
+                    const container = document.getElementById('fkt-container');
+                    const label = document.createElement('label');
+                    label.innerHTML = 'Zuständiger FKT Neu: <input type="text" class="fkt-input">';
+                    container.appendChild(document.createElement('br'));
+                    container.appendChild(label);
+                };
+
+                document.getElementById('save-info').onclick = () => {
+                    const wrInput = document.getElementById('wr-neu');
+                    const wr = wrInput ? wrInput.value : '';
+                    const fkts = Array.from(document.querySelectorAll('#fkt-container .fkt-input')).map(el => el.value);
+                    fetch('http://127.0.0.1:5000/save_soll', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ landkreis: districtNumber, wirtschaftsregionNeu: wr, fktNeu: fkts })
+                    }).then(() => { infoBox.style.display = 'none'; })
+                      .catch(err => console.error(err));
+                };
+            });
         });
     </script>
 </body>
