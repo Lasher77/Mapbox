@@ -32,6 +32,11 @@
         <select id="bundesland-select"></select>
         <h3>Landkreise einfärben</h3>
         <label><input type="checkbox" id="color-toggle" checked> nach Mitarbeitern</label>
+        <h3>Modus</h3>
+        <select id="mode-select">
+            <option value="ist">Ist</option>
+            <option value="soll">Soll</option>
+        </select>
     </div>
     <div id="map"></div>
 
@@ -71,6 +76,8 @@
         let mitarbeiterData = {};
         let potenzialeData = {};
         let coloringEnabled = true;
+        let assignments = {};
+        let mode = 'ist';
 
         map.on('load', function () {
             fetch('http://localhost:8000/Wirtschaftsregionen_cleaned.geojson')
@@ -129,8 +136,14 @@
             });
 
             const bundeslandSelect = document.getElementById('bundesland-select');
+            const modeSelect = document.getElementById('mode-select');
             const colorToggle = document.getElementById('color-toggle');
             coloringEnabled = colorToggle.checked;
+            mode = modeSelect.value;
+            modeSelect.addEventListener('change', () => {
+                mode = modeSelect.value;
+                updateLandkreisColors();
+            });
             colorToggle.addEventListener('change', () => {
                 coloringEnabled = colorToggle.checked;
                 updateLandkreisColors();
@@ -174,7 +187,22 @@
                 .then(res => res.json())
                 .then(data => { potenzialeData = data; });
 
+            fetch('http://127.0.0.1:5000/assignments')
+                .then(res => res.json())
+                .then(data => { assignments = data; updateLandkreisColors(); });
+
             function updateLandkreisColors() {
+                if (mode === 'soll') {
+                    const expr = ['match', ['get', 'RS']];
+                    for (const code of Object.keys(assignments)) {
+                        expr.push(code, '#0000FF');
+                    }
+                    expr.push('#FFFFFF');
+                    map.setPaintProperty('landkreise-fill', 'fill-color', expr);
+                    map.setPaintProperty('landkreise-fill', 'fill-opacity', 0.6);
+                    return;
+                }
+
                 if (!coloringEnabled) {
                     map.setPaintProperty('landkreise-fill', 'fill-opacity', 0);
                     return;
@@ -207,6 +235,27 @@
             });
 
             map.on('mouseleave', 'landkreise-fill', () => popup.remove());
+
+            map.on('click', 'landkreise-fill', (e) => {
+                if (mode !== 'soll') return;
+                const rs = e.features[0].properties.RS;
+                fetch(`http://127.0.0.1:5000/assignment/${rs}`)
+                    .then(r => r.ok ? r.json() : {})
+                    .then(data => {
+                        const current = data.employee || '';
+                        const value = prompt('Mitarbeiter für Landkreis ' + rs, current);
+                        if (value !== null) {
+                            fetch('http://127.0.0.1:5000/assignment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ rs: rs, employee: value })
+                            }).then(() => {
+                                assignments[rs] = value;
+                                updateLandkreisColors();
+                            });
+                        }
+                    });
+            });
         });
     </script>
 </body>

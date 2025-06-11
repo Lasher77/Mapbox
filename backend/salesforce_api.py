@@ -1,7 +1,8 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from simple_salesforce import Salesforce
 from flask_cors import CORS
 from collections import defaultdict
+import json
 import logging
 import os
 
@@ -10,6 +11,17 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
+
+ASSIGNMENT_FILE = os.path.join(os.path.dirname(__file__), 'assignments.json')
+try:
+    with open(ASSIGNMENT_FILE) as f:
+        ASSIGNMENTS = json.load(f)
+except FileNotFoundError:
+    ASSIGNMENTS = {}
+
+def _save_assignments():
+    with open(ASSIGNMENT_FILE, 'w') as f:
+        json.dump(ASSIGNMENTS, f)
 
 # Salesforce-Verbindung herstellen
 def connect_salesforce():
@@ -180,6 +192,31 @@ def get_unternehmen_by_landkreis():
     except Exception as e:
         logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")
         return jsonify({"error": str(e)}), 403
+
+
+@app.route('/assignments')
+def get_assignments():
+    """Return all locally stored assignments."""
+    return jsonify(ASSIGNMENTS)
+
+
+@app.route('/assignment/<rs>')
+def get_assignment(rs):
+    """Return the assignment for a single county code."""
+    return jsonify(ASSIGNMENTS.get(rs, {}))
+
+
+@app.route('/assignment', methods=['POST'])
+def save_assignment():
+    """Store an assignment and persist it on disk."""
+    data = request.get_json(force=True) or {}
+    rs = data.get('rs')
+    employee = data.get('employee')
+    if not rs or employee is None:
+        return jsonify({'error': 'missing parameters'}), 400
+    ASSIGNMENTS[rs] = {'employee': employee}
+    _save_assignments()
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
