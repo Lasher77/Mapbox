@@ -89,6 +89,7 @@
         let accountsData = {};
         let mitarbeiterData = {};
         let potenzialeData = {};
+        let assignmentData = {};
         let coloringEnabled = true;
         const infoBox = document.getElementById('info-box');
         const viewSelect = document.getElementById('view-select');
@@ -210,7 +211,13 @@
                 }
 
                 const expression = ['match', ['get', 'RS']];
+
+                for (const code of Object.keys(assignmentData)) {
+                    expression.push(code, '#00BFFF');
+                }
+
                 for (const [code, staff] of Object.entries(mitarbeiterData)) {
+                    if (assignmentData[code]) continue;
                     const count = Array.isArray(staff) ? staff.length : 0;
                     let color = '#FFFFFF';
                     if (count === 1) color = '#008000';
@@ -218,6 +225,7 @@
                     else if (count > 2) color = '#FF0000';
                     expression.push(code, color);
                 }
+
                 expression.push('#FFFFFF');
                 map.setPaintProperty('landkreise-fill', 'fill-color', expression);
                 map.setPaintProperty('landkreise-fill', 'fill-opacity', 0.6);
@@ -247,33 +255,49 @@
                 const districtNumber = props.RS;
                 const count = accountsData[districtNumber] || 0;
                 const totalCompanies = potenzialeData[districtNumber] || 0;
-                let html = `<strong>${props.GEN}</strong><br/>Bundesland: ${blName}<br/>Mitgliederzahl: ${count}<br/>Unternehmenspotenzial: ${totalCompanies}<br/>Landkreisnummer: ${districtNumber}<br/>`;
-                html += 'Wirtschaftsregion Neu: <input type="text" id="wr-neu"><br/>';
-                html += '<div id="fkt-container"><label>Zuständiger FKT Neu: <input type="text" class="fkt-input"></label></div>';
-                html += '<button id="add-fkt" type="button">+</button><br/>';
-                html += '<button id="save-info" type="button">Speichern</button>';
-                infoBox.innerHTML = html;
-                infoBox.style.display = 'block';
 
-                document.getElementById('add-fkt').onclick = () => {
-                    const container = document.getElementById('fkt-container');
-                    const label = document.createElement('label');
-                    label.innerHTML = 'Zuständiger FKT Neu: <input type="text" class="fkt-input">';
-                    container.appendChild(document.createElement('br'));
-                    container.appendChild(label);
-                };
+                fetch(`http://127.0.0.1:5000/assignment/${districtNumber}`)
+                    .then(res => res.json())
+                    .then(assign => {
+                        const wrVal = assign.wirtschaftsregion || '';
+                        const fktVals = Array.isArray(assign.fkt) && assign.fkt.length ? assign.fkt : [''];
+                        let html = `<strong>${props.GEN}</strong><br/>Bundesland: ${blName}<br/>Mitgliederzahl: ${count}<br/>Unternehmenspotenzial: ${totalCompanies}<br/>Landkreisnummer: ${districtNumber}<br/>`;
+                        html += `Wirtschaftsregion Neu: <input type="text" id="wr-neu" value="${wrVal}"><br/>`;
+                        html += '<div id="fkt-container">';
+                        fktVals.forEach((val, idx) => {
+                            if (idx > 0) html += '<br/>';
+                            html += `<label>Zuständiger FKT Neu: <input type="text" class="fkt-input" value="${val}"></label>`;
+                        });
+                        html += '</div>';
+                        html += '<button id="add-fkt" type="button">+</button><br/>';
+                        html += '<button id="save-info" type="button">Speichern</button>';
+                        infoBox.innerHTML = html;
+                        infoBox.style.display = 'block';
 
-                document.getElementById('save-info').onclick = () => {
-                    const wrInput = document.getElementById('wr-neu');
-                    const wr = wrInput ? wrInput.value : '';
-                    const fkts = Array.from(document.querySelectorAll('#fkt-container .fkt-input')).map(el => el.value);
-                    fetch('http://127.0.0.1:5000/save_soll', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ landkreis: districtNumber, wirtschaftsregionNeu: wr, fktNeu: fkts })
-                    }).then(() => { infoBox.style.display = 'none'; })
-                      .catch(err => console.error(err));
-                };
+                        document.getElementById('add-fkt').onclick = () => {
+                            const container = document.getElementById('fkt-container');
+                            const label = document.createElement('label');
+                            label.innerHTML = 'Zuständiger FKT Neu: <input type="text" class="fkt-input">';
+                            container.appendChild(document.createElement('br'));
+                            container.appendChild(label);
+                        };
+
+                        document.getElementById('save-info').onclick = () => {
+                            const wrInput = document.getElementById('wr-neu');
+                            const wr = wrInput ? wrInput.value : '';
+                            const fkts = Array.from(document.querySelectorAll('#fkt-container .fkt-input')).map(el => el.value);
+                            fetch('http://127.0.0.1:5000/assignment', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ rs: districtNumber, wirtschaftsregion: wr, fkt: fkts })
+                            }).then(() => {
+                                infoBox.style.display = 'none';
+                                assignmentData[districtNumber] = true;
+                                updateLandkreisColors();
+                            })
+                              .catch(err => console.error(err));
+                        };
+                    });
             });
         });
     </script>
