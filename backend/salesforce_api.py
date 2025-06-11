@@ -1,15 +1,18 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from simple_salesforce import Salesforce
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from collections import defaultdict
+import json
 import logging
 import os
+from db import get_connection
 
 # Logging-Konfiguration
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
+db_conn = get_connection()
 
 # Salesforce-Verbindung herstellen
 def connect_salesforce():
@@ -180,6 +183,44 @@ def get_unternehmen_by_landkreis():
     except Exception as e:
         logging.error(f"❌ Fehler bei Salesforce-Abfrage: {e}")
         return jsonify({"error": str(e)}), 403
+
+
+@app.route('/assignment/<rs>', methods=['GET'])
+@cross_origin()
+def get_assignment(rs):
+    """Return stored assignment data for a district."""
+    cur = db_conn.execute(
+        "SELECT rs, wirtschaftsregion, fkt FROM assignments WHERE rs=?",
+        (rs,)
+    )
+    row = cur.fetchone()
+    if row is None:
+        return jsonify({})
+    return jsonify(
+        {
+            "rs": row["rs"],
+            "wirtschaftsregion": row["wirtschaftsregion"],
+            "fkt": json.loads(row["fkt"]) if row["fkt"] else [],
+        }
+    )
+
+
+@app.route('/assignment', methods=['POST'])
+@cross_origin()
+def post_assignment():
+    """Store or update an assignment record."""
+    data = request.get_json(force=True)
+    rs = data.get("rs")
+    region = data.get("wirtschaftsregion")
+    fkt_list = data.get("fkt", [])
+    if not rs:
+        return jsonify({"error": "rs missing"}), 400
+    db_conn.execute(
+        "INSERT OR REPLACE INTO assignments(rs, wirtschaftsregion, fkt) VALUES (?, ?, ?)",
+        (rs, region, json.dumps(fkt_list)),
+    )
+    db_conn.commit()
+    return jsonify({"status": "ok"})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
