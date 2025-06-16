@@ -43,7 +43,7 @@ database location or name.
    python Server.py
    ```
 2. In a separate terminal start the Flask backend that connects to Salesforce.
-   It now listens on all interfaces so it can be reached from other machines:
+   It now listens on all interfaces on port **5001** so it can be reached from other machines:
    ```bash
    python backend/salesforce_api.py
    ```
