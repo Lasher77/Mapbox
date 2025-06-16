@@ -53,9 +53,10 @@ database location or name.
    e.g. `http://192.168.0.10:8000/index.html`.
 4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
 5. The endpoint `/unternehmen_by_landkreis` provides the total number of companies per district, which is also shown in the hover popup.
-6. Two additional endpoints handle county assignments:
+6. Endpoints handling county assignments:
    - `POST /assignment` stores an assignment record.
    - `GET /assignment/<rs>` retrieves the stored data for a county.
+   - `GET /assignments` returns a list of all saved county numbers.
 7. Use the dropdown "Ansicht" to switch between **Ist** and **Soll**.
    In **Soll** view, clicking a county opens an info box where you can edit
    the economic region and FKT contacts. The assignments are saved in the

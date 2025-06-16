@@ -205,6 +205,15 @@ def get_assignment(rs):
     )
 
 
+@app.route('/assignments', methods=['GET'])
+@cross_origin()
+def get_assignments():
+    """Return a dict of all district codes that have an assignment."""
+    cur = db_conn.execute("SELECT rs FROM assignments")
+    data = {row["rs"]: True for row in cur.fetchall()}
+    return jsonify(data)
+
+
 @app.route('/assignment', methods=['POST'])
 @cross_origin()
 def post_assignment():
