@@ -59,7 +59,7 @@
     <script>
         mapboxgl.accessToken = window.config.MAPBOX_TOKEN;
         // Use the same host as the page for API requests so remote clients work
-        const apiBase = 'http://' + window.location.hostname + ':5000';
+        const apiBase = `${window.location.protocol}//${window.location.hostname}:5000`;
 
         const bundeslaender = [
             {id: '01', name: 'Schleswig-Holstein'},
