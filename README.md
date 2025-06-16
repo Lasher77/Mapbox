@@ -42,11 +42,15 @@ database location or name.
    ```bash
    python Server.py
    ```
-2. In a separate terminal start the Flask backend that connects to Salesforce:
+2. In a separate terminal start the Flask backend that connects to Salesforce.
+   It now listens on all interfaces so it can be reached from other machines:
    ```bash
    python backend/salesforce_api.py
    ```
 3. Open [http://localhost:8000/index.html](http://localhost:8000/index.html) in your browser to view the map.
+   To access the map from another computer on the same network, replace
+   `localhost` with the IP address of the machine running the server,
+   e.g. `http://192.168.0.10:8000/index.html`.
 4. The backend exposes `/mitarbeiter_by_landkreis` which the map uses to display the employees active in each county when hovering over a district.
 5. The endpoint `/unternehmen_by_landkreis` provides the total number of companies per district, which is also shown in the hover popup.
 6. Two additional endpoints handle county assignments:

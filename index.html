@@ -58,6 +58,8 @@
     <script src="config.js"></script>
     <script>
         mapboxgl.accessToken = window.config.MAPBOX_TOKEN;
+        // Use the same host as the page for API requests so remote clients work
+        const apiBase = 'http://' + window.location.hostname + ':5000';
 
         const bundeslaender = [
             {id: '01', name: 'Schleswig-Holstein'},
@@ -103,7 +105,7 @@
         });
 
         map.on('load', function () {
-            fetch('http://localhost:8000/Wirtschaftsregionen_cleaned.geojson')
+            fetch('./Wirtschaftsregionen_cleaned.geojson')
                 .then(response => response.json())
                 .then(data => {
                     map.addSource('wirtschaftsregionen', { type: 'geojson', data: data });
@@ -142,7 +144,7 @@
                     });
                 });
 
-            map.addSource('landkreise', { type: 'geojson', data: 'http://localhost:8000/Landkreise.geojson' });
+            map.addSource('landkreise', { type: 'geojson', data: './Landkreise.geojson' });
 
             map.addLayer({
                 id: 'landkreise-fill',
@@ -192,15 +194,15 @@
             }
             updateBundeslaenderFilter();
 
-            fetch('http://127.0.0.1:5000/accounts_by_landkreis')
+            fetch(`${apiBase}/accounts_by_landkreis`)
                 .then(res => res.json())
                 .then(data => { accountsData = data; });
 
-            fetch('http://127.0.0.1:5000/mitarbeiter_by_landkreis')
+            fetch(`${apiBase}/mitarbeiter_by_landkreis`)
                 .then(res => res.json())
                 .then(data => { mitarbeiterData = data; updateLandkreisColors(); });
 
-            fetch('http://127.0.0.1:5000/unternehmen_by_landkreis')
+            fetch(`${apiBase}/unternehmen_by_landkreis`)
                 .then(res => res.json())
                 .then(data => { potenzialeData = data; });
 
@@ -256,7 +258,7 @@
                 const count = accountsData[districtNumber] || 0;
                 const totalCompanies = potenzialeData[districtNumber] || 0;
 
-                fetch(`http://127.0.0.1:5000/assignment/${districtNumber}`)
+                fetch(`${apiBase}/assignment/${districtNumber}`)
                     .then(res => res.json())
                     .then(assign => {
                         const wrVal = assign.wirtschaftsregion || '';
@@ -286,7 +288,7 @@
                             const wrInput = document.getElementById('wr-neu');
                             const wr = wrInput ? wrInput.value : '';
                             const fkts = Array.from(document.querySelectorAll('#fkt-container .fkt-input')).map(el => el.value);
-                            fetch('http://127.0.0.1:5000/assignment', {
+                            fetch(`${apiBase}/assignment`, {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({ rs: districtNumber, wirtschaftsregion: wr, fkt: fkts })
