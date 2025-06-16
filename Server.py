@@ -18,6 +18,7 @@ class GeoJSONCORSRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         super().end_headers()
 
-with socketserver.TCPServer(("", PORT), GeoJSONCORSRequestHandler) as httpd:
+# Use ThreadingHTTPServer to handle multiple requests concurrently
+with http.server.ThreadingHTTPServer(("", PORT), GeoJSONCORSRequestHandler) as httpd:
     print(f"✅ Lokaler Server läuft auf http://localhost:{PORT}")
     httpd.serve_forever()
