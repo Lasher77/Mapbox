@@ -30,10 +30,22 @@
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            max-width: 300px;
+            max-width: 350px;
             font-family: Arial, sans-serif;
             display: none;
             z-index: 1000;
+        }
+        #info-box label {
+            display: block;
+            margin-top: 8px;
+        }
+        #info-box input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 4px;
+        }
+        #info-box button {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -264,15 +276,18 @@
                     .then(assign => {
                         const wrVal = assign.wirtschaftsregion || '';
                         const fktVals = Array.isArray(assign.fkt) && assign.fkt.length ? assign.fkt : [''];
-                        let html = `<strong>${props.GEN}</strong><br/>Bundesland: ${blName}<br/>Mitgliederzahl: ${count}<br/>Unternehmenspotenzial: ${totalCompanies}<br/>Landkreisnummer: ${districtNumber}<br/>`;
-                        html += `Wirtschaftsregion Neu: <input type="text" id="wr-neu" value="${wrVal}"><br/>`;
+                        let html = `<div><strong>${props.GEN}</strong></div>`;
+                        html += `<div>Bundesland: ${blName}</div>`;
+                        html += `<div>Mitgliederzahl: ${count}</div>`;
+                        html += `<div>Unternehmenspotenzial: ${totalCompanies}</div>`;
+                        html += `<div>Landkreisnummer: ${districtNumber}</div>`;
+                        html += `<label>Wirtschaftsregion Neu:<input type="text" id="wr-neu" value="${wrVal}"></label>`;
                         html += '<div id="fkt-container">';
-                        fktVals.forEach((val, idx) => {
-                            if (idx > 0) html += '<br/>';
-                            html += `<label>Zuständiger FKT Neu: <input type="text" class="fkt-input" value="${val}"></label>`;
+                        fktVals.forEach((val) => {
+                            html += `<label>Zuständiger FKT Neu:<input type="text" class="fkt-input" value="${val}"></label>`;
                         });
                         html += '</div>';
-                        html += '<button id="add-fkt" type="button">+</button><br/>';
+                        html += '<button id="add-fkt" type="button">+</button>';
                         html += '<button id="save-info" type="button">Speichern</button>';
                         infoBox.innerHTML = html;
                         infoBox.style.display = 'block';
@@ -280,8 +295,11 @@
                         document.getElementById('add-fkt').onclick = () => {
                             const container = document.getElementById('fkt-container');
                             const label = document.createElement('label');
-                            label.innerHTML = 'Zuständiger FKT Neu: <input type="text" class="fkt-input">';
-                            container.appendChild(document.createElement('br'));
+                            label.textContent = 'Zuständiger FKT Neu:';
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.className = 'fkt-input';
+                            label.appendChild(input);
                             container.appendChild(label);
                         };
 
