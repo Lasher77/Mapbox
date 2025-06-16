@@ -224,5 +224,5 @@ def post_assignment():
 
 if __name__ == '__main__':
     # Listen on all interfaces so the API can be reached from other machines
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5001)
 
