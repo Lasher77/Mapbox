@@ -219,6 +219,10 @@
                 .then(res => res.json())
                 .then(data => { potenzialeData = data; });
 
+            fetch(`${apiBase}/assignments`)
+                .then(res => res.json())
+                .then(data => { assignmentData = data; updateLandkreisColors(); });
+
             function updateLandkreisColors() {
                 if (!coloringEnabled) {
                     map.setPaintProperty('landkreise-fill', 'fill-opacity', 0);
