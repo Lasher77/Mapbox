@@ -3,19 +3,22 @@ import socketserver
 
 PORT = 8000
 
-class Handler(http.server.SimpleHTTPRequestHandler):
+class GeoJSONCORSRequestHandler(http.server.SimpleHTTPRequestHandler):
+    """Serve files with CORS headers and proper GeoJSON content type."""
+
     def end_headers(self):
         if self.path.endswith(".geojson"):
-            self.send_header("Content-type", "application/geo+json")  # Korrektes MIME-Format
-        super().end_headers()
+            # Send correct MIME type for GeoJSON files
+            self.send_header("Content-Type", "application/geo+json")
 
-class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")  # CORS erlauben
+        # Add CORS headers
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type")
+
         super().end_headers()
 
-with socketserver.TCPServer(("", PORT), CORSRequestHandler) as httpd:
+# Use ThreadingHTTPServer to handle multiple requests concurrently
+with http.server.ThreadingHTTPServer(("", PORT), GeoJSONCORSRequestHandler) as httpd:
     print(f"✅ Lokaler Server läuft auf http://localhost:{PORT}")
     httpd.serve_forever()
