@@ -115,6 +115,7 @@
             if (!sollView) {
                 infoBox.style.display = 'none';
             }
+            updateLandkreisColors();
         });
 
         map.on('load', function () {
@@ -231,12 +232,14 @@
 
                 const expression = ['match', ['get', 'RS']];
 
-                for (const code of Object.keys(assignmentData)) {
-                    expression.push(code, '#00BFFF');
+                if (sollView) {
+                    for (const code of Object.keys(assignmentData)) {
+                        expression.push(code, '#00BFFF');
+                    }
                 }
 
                 for (const [code, staff] of Object.entries(mitarbeiterData)) {
-                    if (assignmentData[code]) continue;
+                    if (sollView && assignmentData[code]) continue;
                     const count = Array.isArray(staff) ? staff.length : 0;
                     let color = '#FFFFFF';
                     if (count === 1) color = '#008000';
