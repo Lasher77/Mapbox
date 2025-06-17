@@ -132,6 +132,7 @@
                             id: `region-${region}`,
                             type: 'fill',
                             source: 'wirtschaftsregionen',
+                            layout: { visibility: 'none' },
                             paint: { 'fill-color': '#088', 'fill-opacity': 0.5 },
                             filter: ['==', ['get', 'Wirtschaftsregion'], region]
                         });
@@ -139,7 +140,7 @@
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.id = `checkbox-${region}`;
-                        checkbox.checked = true;
+                        checkbox.checked = false;
 
                         checkbox.addEventListener('change', () => {
                             const visibility = checkbox.checked ? 'visible' : 'none';
