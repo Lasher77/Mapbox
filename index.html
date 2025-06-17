@@ -226,11 +226,7 @@
                 .then(data => { assignmentData = data; updateLandkreisColors(); });
 
             function updateLandkreisColors() {
-                if (!coloringEnabled) {
-                    map.setPaintProperty('landkreise-fill', 'fill-opacity', 0);
-                    return;
-                }
-
+                const showColors = coloringEnabled || sollView;
                 const expression = ['match', ['get', 'RS']];
 
                 if (sollView) {
@@ -239,19 +235,21 @@
                     }
                 }
 
-                for (const [code, staff] of Object.entries(mitarbeiterData)) {
-                    if (sollView && assignmentData[code]) continue;
-                    const count = Array.isArray(staff) ? staff.length : 0;
-                    let color = '#FFFFFF';
-                    if (count === 1) color = '#008000';
-                    else if (count === 2) color = '#FFFF00';
-                    else if (count > 2) color = '#FF0000';
-                    expression.push(code, color);
+                if (coloringEnabled) {
+                    for (const [code, staff] of Object.entries(mitarbeiterData)) {
+                        if (sollView && assignmentData[code]) continue;
+                        const count = Array.isArray(staff) ? staff.length : 0;
+                        let color = '#FFFFFF';
+                        if (count === 1) color = '#008000';
+                        else if (count === 2) color = '#FFFF00';
+                        else if (count > 2) color = '#FF0000';
+                        expression.push(code, color);
+                    }
                 }
 
                 expression.push('#FFFFFF');
                 map.setPaintProperty('landkreise-fill', 'fill-color', expression);
-                map.setPaintProperty('landkreise-fill', 'fill-opacity', 0.6);
+                map.setPaintProperty('landkreise-fill', 'fill-opacity', showColors ? 0.6 : 0);
             }
 
             map.on('mousemove', 'landkreise-fill', (e) => {
