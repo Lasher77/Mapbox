@@ -62,3 +62,5 @@ database location or name.
    the economic region and FKT contacts. The assignments are saved in the
    SQLite database. The checkbox "nach Mitarbeitern" toggles coloring of
    counties based on the number of assigned employees.
+8. Saved assignments are highlighted in blue when the page loads, but this
+   highlight is only visible while the view is set to **Soll**.
