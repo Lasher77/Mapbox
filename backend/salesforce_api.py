@@ -221,15 +221,19 @@ def post_assignment():
     data = request.get_json(force=True)
     rs = data.get("rs")
     region = data.get("wirtschaftsregion")
-    fkt_list = data.get("fkt", [])
+    fkt_list = [f.strip() for f in data.get("fkt", []) if str(f).strip()]
     if not rs:
         return jsonify({"error": "rs missing"}), 400
+    if not fkt_list:
+        db_conn.execute("DELETE FROM assignments WHERE rs=?", (rs,))
+        db_conn.commit()
+        return jsonify({"status": "deleted"})
     db_conn.execute(
         "INSERT OR REPLACE INTO assignments(rs, wirtschaftsregion, fkt) VALUES (?, ?, ?)",
         (rs, region, json.dumps(fkt_list)),
     )
     db_conn.commit()
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "saved"})
 
 if __name__ == '__main__':
     # Listen on all interfaces so the API can be reached from other machines

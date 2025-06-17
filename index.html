@@ -312,16 +312,24 @@
                         document.getElementById('save-info').onclick = () => {
                             const wrInput = document.getElementById('wr-neu');
                             const wr = wrInput ? wrInput.value : '';
-                            const fkts = Array.from(document.querySelectorAll('#fkt-container .fkt-input')).map(el => el.value);
+                            const fkts = Array.from(document.querySelectorAll('#fkt-container .fkt-input'))
+                                .map(el => el.value.trim())
+                                .filter(val => val !== '');
                             fetch(`${apiBase}/assignment`, {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({ rs: districtNumber, wirtschaftsregion: wr, fkt: fkts })
-                            }).then(() => {
-                                infoBox.style.display = 'none';
-                                assignmentData[districtNumber] = true;
-                                updateLandkreisColors();
                             })
+                              .then(res => res.json())
+                              .then(res => {
+                                  infoBox.style.display = 'none';
+                                  if (res.status === 'deleted') {
+                                      delete assignmentData[districtNumber];
+                                  } else {
+                                      assignmentData[districtNumber] = true;
+                                  }
+                                  updateLandkreisColors();
+                              })
                               .catch(err => console.error(err));
                         };
                     });
