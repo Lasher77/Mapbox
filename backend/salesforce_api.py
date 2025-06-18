@@ -214,6 +214,24 @@ def get_assignments():
     return jsonify(data)
 
 
+@app.route('/assignments_full', methods=['GET'])
+@cross_origin()
+def get_assignments_full():
+    """Return all assignment records with details."""
+    cur = db_conn.execute("SELECT rs, wirtschaftsregion, fkt FROM assignments")
+    rows = cur.fetchall()
+    data = []
+    for row in rows:
+        data.append(
+            {
+                "rs": row["rs"],
+                "wirtschaftsregion": row["wirtschaftsregion"],
+                "fkt": json.loads(row["fkt"]) if row["fkt"] else [],
+            }
+        )
+    return jsonify(data)
+
+
 @app.route('/assignment', methods=['POST'])
 @cross_origin()
 def post_assignment():
