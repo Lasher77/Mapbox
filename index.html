@@ -99,10 +99,11 @@
         ];
 
         var map = new mapboxgl.Map({
-            container: 'map', 
+            container: 'map',
             style: 'mapbox://styles/mapbox/streets-v11',
             center: [10.0, 51.0],
-            zoom: 5
+            zoom: 5,
+            preserveDrawingBuffer: true
         });
 
         const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
