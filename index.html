@@ -6,6 +6,7 @@
     <title>Karte mit Wirtschaftsregionen, Landkreisen und Salesforce-Daten</title>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100%; height: 100vh; }
@@ -62,6 +63,10 @@
             <option value="ist">Ist-Zustand</option>
             <option value="soll">Soll-Zustand</option>
         </select>
+        <h3>Wirtschaftsregion Neu</h3>
+        <select id="wr-select"></select>
+        <button id="export-image" type="button">Als Bild exportieren</button>
+        <button id="export-pdf" type="button">Als PDF exportieren</button>
     </div>
     <div id="map"></div>
     <div id="info-box"></div>
@@ -105,9 +110,14 @@
         let mitarbeiterData = {};
         let potenzialeData = {};
         let assignmentData = {};
+        let assignmentsFull = [];
+        let landkreiseData = null;
         let coloringEnabled = true;
         const infoBox = document.getElementById('info-box');
         const viewSelect = document.getElementById('view-select');
+        const wrSelect = document.getElementById('wr-select');
+        const exportImageBtn = document.getElementById('export-image');
+        const exportPdfBtn = document.getElementById('export-pdf');
         let sollView = false;
 
         viewSelect.addEventListener('change', () => {
@@ -117,6 +127,13 @@
             }
             updateLandkreisColors();
         });
+
+        wrSelect.addEventListener('change', () => {
+            showRegion(wrSelect.value);
+        });
+
+        exportImageBtn.addEventListener('click', () => exportMap(false));
+        exportPdfBtn.addEventListener('click', () => exportMap(true));
 
         map.on('load', function () {
             fetch('./Wirtschaftsregionen_cleaned.geojson')
@@ -159,21 +176,26 @@
                     });
                 });
 
-            map.addSource('landkreise', { type: 'geojson', data: './Landkreise.geojson' });
+            fetch('./Landkreise.geojson')
+                .then(res => res.json())
+                .then(data => {
+                    landkreiseData = data;
+                    map.addSource('landkreise', { type: 'geojson', data: data });
 
-            map.addLayer({
-                id: 'landkreise-fill',
-                type: 'fill',
-                source: 'landkreise',
-                paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0 }
-            });
+                    map.addLayer({
+                        id: 'landkreise-fill',
+                        type: 'fill',
+                        source: 'landkreise',
+                        paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0 }
+                    });
 
-            map.addLayer({
-                id: 'landkreise-layer',
-                type: 'line',
-                source: 'landkreise',
-                paint: { 'line-color': '#000000', 'line-width': 1 }
-            });
+                    map.addLayer({
+                        id: 'landkreise-layer',
+                        type: 'line',
+                        source: 'landkreise',
+                        paint: { 'line-color': '#000000', 'line-width': 1 }
+                    });
+                });
 
             const bundeslandSelect = document.getElementById('bundesland-select');
             const colorToggle = document.getElementById('color-toggle');
@@ -224,6 +246,10 @@
             fetch(`${apiBase}/assignments`)
                 .then(res => res.json())
                 .then(data => { assignmentData = data; updateLandkreisColors(); });
+
+            fetch(`${apiBase}/assignments_full`)
+                .then(res => res.json())
+                .then(data => { assignmentsFull = data; populateWRSelect(); });
 
             function updateLandkreisColors() {
                 const showColors = coloringEnabled || sollView;
@@ -335,6 +361,76 @@
                     });
             });
         });
+
+        function populateWRSelect() {
+            const regions = [...new Set(assignmentsFull.map(a => a.wirtschaftsregion).filter(r => r))];
+            wrSelect.innerHTML = '<option value="">- Auswählen -</option>';
+            regions.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                wrSelect.appendChild(opt);
+            });
+        }
+
+        function showRegion(regionName) {
+            if (!landkreiseData) return;
+            const features = [];
+            const colorMap = {};
+            const colors = ['#e6194b','#3cb44b','#ffe119','#4363d8','#f58231','#911eb4','#46f0f0','#f032e6','#bcf60c','#fabebe','#008080','#e6beff','#9a6324','#fffac8','#800000','#aaffc3','#808000','#ffd8b1','#000075','#808080'];
+            let colorIdx = 0;
+            assignmentsFull.filter(a => a.wirtschaftsregion === regionName).forEach(a => {
+                const fkt = (a.fkt && a.fkt.length) ? a.fkt[0] : '';
+                if (!colorMap[fkt]) {
+                    colorMap[fkt] = colors[colorIdx % colors.length];
+                    colorIdx++;
+                }
+                const lkFeature = landkreiseData.features.find(f => f.properties.RS === a.rs);
+                if (lkFeature) {
+                    features.push({
+                        type: 'Feature',
+                        geometry: lkFeature.geometry,
+                        properties: { color: colorMap[fkt], label: a.fkt.join(', ') }
+                    });
+                }
+            });
+            if (!map.getSource('selected-region')) {
+                map.addSource('selected-region', { type: 'geojson', data: { type: 'FeatureCollection', features: features } });
+                map.addLayer({
+                    id: 'selected-region-fill',
+                    type: 'fill',
+                    source: 'selected-region',
+                    paint: { 'fill-color': ['get','color'], 'fill-opacity': 0.7 }
+                });
+                map.addLayer({
+                    id: 'selected-region-labels',
+                    type: 'symbol',
+                    source: 'selected-region',
+                    layout: { 'text-field': ['get','label'], 'text-size': 12 },
+                    paint: { 'text-color': '#000000' }
+                });
+            } else {
+                map.getSource('selected-region').setData({ type: 'FeatureCollection', features: features });
+            }
+        }
+
+        function exportMap(asPDF) {
+            const dataUrl = map.getCanvas().toDataURL('image/png');
+            if (asPDF) {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape' });
+                const imgProps = pdf.getImageProperties(dataUrl);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('karte.pdf');
+            } else {
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'karte.png';
+                link.click();
+            }
+        }
     </script>
 </body>
 </html>
